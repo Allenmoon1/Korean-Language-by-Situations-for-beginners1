@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Корейские фразы по ситуациям</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body{
+  font-family: 'Nunito', sans-serif;
+  background:#fdf5e6;
+  color:#333;
+  margin:0;
+  padding:20px;
+}
+h1{color:#5a3e1b;text-align:center;margin-bottom:20px;}
+h2{margin-top:40px;color:#a67c52;border-bottom:2px solid #e8d8c3;padding-bottom:5px;}
+.phrase{
+  margin-bottom:12px;
+  padding:12px;
+  background:#fff8f0;
+  border-radius:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+.phrase:hover{transform: translateY(-2px);}
+.korean{font-weight:600;font-size:18px;color:#6b4226;}
+.russian{font-size:16px;margin-top:4px;color:#5a3e1b;}
+.btn{
+  cursor:pointer;
+  padding:6px 10px;
+  border:none;
+  border-radius:8px;
+  background:#a67c52;
+  color:#fff;
+  font-weight:600;
+  transition: background 0.2s;
+}
+.btn:hover{background:#8f6542;}
+.practice{
+  margin-top:50px;
+  padding:20px;
+  background:#f8eee0;
+  border-radius:12px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.05);
+}
+.practice h3{color:#a67c52;}
+.practice select, .practice button{
+  padding:8px 12px;
+  border-radius:8px;
+  border:1px solid #e8d8c3;
+  margin-right:10px;
+  font-size:14px;
+}
+#korPhrase{
+  font-size:20px;
+  font-weight:600;
+  margin:15px 0;
+  color:#6b4226;
+  background:#fff8f0;
+  padding:12px;
+  border-radius:12px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:pointer;
+}
+#userAnswer{
+  flex:1;
+  padding:10px 15px;
+  border-radius:12px;
+  border:1px solid #e8d8c3;
+  font-size:16px;
+  outline:none;
+  transition: all 0.6s ease;
+  background:#fff8f0;
+  color:#333;
+}
+#userAnswer:focus{
+  border-color:#a67c52;
+  box-shadow:0 0 8px rgba(166,124,82,0.4);
+}
+.feedback{
+  margin-top:10px;
+  padding:10px;
+  background:#fff4e6;
+  border-radius:8px;
+  color:#6b4226;
+  line-height:1.4;
+  white-space:pre-line;
+}
+.progress-container{
+  width:100%;
+  max-width:100%;
+  margin-top:15px;
+}
+.progress-bar{
+  width: 100%;
+  background:#e8d8c3;
+  border-radius:12px;
+  height:16px;
+  overflow: hidden;
+}
+.progress{
+  height:100%;
+  width:0%;
+  background:#a67c52;
+  border-radius:12px;
+  transition: width 0.3s;
+}
+</style>
+</head>
+<body>
+
+<h1>Корейские фразы по ситуациям</h1>
+
+<!-- Список всех фраз -->
+<div id="content"></div>
+
+<!-- Блок практики -->
+<div class="practice">
+  <h3>Практика: переведите корейское предложение на русский</h3>
+  <label>Выберите категорию:
+    <select id="practiceCategory"></select>
+  </label>
+
+  <div id="korPhrase">
+    <span id="korText">Здесь будет корейское предложение</span>
+    <button class="btn" onclick="speak(korText.textContent)">▶</button>
+  </div>
+
+  <div style="margin-top:15px; display:flex; align-items:center; gap:10px;">
+    <input type="text" id="userAnswer" placeholder="Введите ваш перевод...">
+    <button class="btn" onclick="checkAnswer()">Проверить</button>
+    <button class="btn" onclick="nextPhrase()">Следующая фраза</button>
+  </div>
+
+  <div class="progress-container">
+    <div class="progress-bar">
+      <div class="progress" id="progress"></div>
+    </div>
+  </div>
+
+  <div class="feedback" id="testFeedback"></div>
+</div>
+
+<script>
+const PHRASES = {
+  "Заказ еды":[
+    {k:"메뉴를 추천해 주십시오.", r:"Пожалуйста, порекомендуйте блюдо."},
+    {k:"이것은 맵습니까?", r:"Это острое?"},
+    {k:"물 한 잔 부탁드립니다.", r:"Можно стакан воды, пожалуйста."},
+    {k:"계산하겠습니다.", r:"Я буду платить."},
+    {k:"추천 메뉴가 무엇입니까?", r:"Какое блюдо вы рекомендуете?"},
+    {k:"덜 맵게 해 주십시오.", r:"Сделайте менее острым, пожалуйста."},
+    {k:"오늘 특별 메뉴가 있습니까?", r:"Есть ли сегодня специальное блюдо?"},
+    {k:"포장 가능합니까?", r:"Можно упаковать на вынос?"}
+  ],
+  "Ориентирование":[
+    {k:"여기 어떻게 갑니까?", r:"Как пройти сюда?"},
+    {k:"지하철역은 어디에 있습니까?", r:"Где находится станция метро?"},
+    {k:"이 버스는 시내로 갑니까?", r:"Этот автобус едет в центр?"},
+    {k:"왼쪽으로 가십시오.", r:"Идите налево."},
+    {k:"택시 불러 주십시오.", r:"Вызовите такси, пожалуйста."},
+    {k:"도와주실 수 있습니까?", r:"Вы можете мне помочь?"},
+    {k:"근처에 식당이 있습니까?", r:"Есть ли рядом ресторан?"},
+    {k:"얼마나 걸립니까?", r:"Сколько времени займет?"}
+  ],
+  "Магазин":[
+    {k:"이것은 얼마입니까?", r:"Сколько это стоит?"},
+    {k:"할인됩니까?", r:"Есть ли скидка?"},
+    {k:"교환 가능합니까?", r:"Можно обменять?"},
+    {k:"카드로 계산하겠습니다.", r:"Заплачу картой."},
+    {k:"영수증 부탁드립니다.", r:"Дайте, пожалуйста, чек."},
+    {k:"포장해 주십시오.", r:"Упакуйте, пожалуйста."},
+    {k:"환불 가능합니까?", r:"Можно вернуть товар?"},
+    {k:"추천 상품이 있습니까?", r:"Есть ли рекомендованные товары?"}
+  ],
+  "Повседневность":[
+    {k:"밥 먹었어?", r:"Ты поел(а)?"},
+    {k:"잘 지냈어?", r:"Как дела?"},
+    {k:"조심해.", r:"Будь осторожен(а)."},
+    {k:"오늘 뭐 해?", r:"Что будешь делать сегодня?"},
+    {k:"고마워.", r:"Спасибо."},
+    {k:"전화해.", r:"Позвони мне."},
+    {k:"이거 재밌어.", r:"Это интересно."},
+    {k:"나중에 봐.", r:"Увидимся позже."}
+  ],
+  "Аэропорт":[
+    {k:"체크인 카운터가 어디입니까?", r:"Где находится стойка регистрации?"},
+    {k:"비행기는 몇 시에 출발합니까?", r:"Во сколько отправляется самолёт?"},
+    {k:"탑승구가 어디에 있습니까?", r:"Где находится выход на посадку?"},
+    {k:"면세점이 어디입니까?", r:"Где duty-free магазин?"},
+    {k:"비행기 좌석을 변경할 수 있습니까?", r:"Можно ли поменять место в самолёте?"},
+    {k:"출국 심사대는 어디입니까?", r:"Где паспортный контроль на вылет?"},
+    {k:"탑승권을 잃어버렸습니다.", r:"Я потерял(а) посадочный талон."},
+    {k:"짐을 찾으러 어디로 가야 합니까?", r:"Куда идти за багажом?"}
+  ]
+};
+
+const contentDiv = document.getElementById('content');
+const practiceSelect = document.getElementById('practiceCategory');
+const korText = document.getElementById('korText');
+const userAnswer = document.getElementById('userAnswer');
+const testFeedback = document.getElementById('testFeedback');
+const progress = document.getElementById('progress');
+
+let voices = [];
+let currentCategory = '';
+let currentPhrases = [];
+let currentIndex = 0;
+
+// Загружаем голоса
+function loadVoices() {
+  voices = speechSynthesis.getVoices();
+  if (!voices.length) {
+    setTimeout(loadVoices, 100);
+  }
+}
+loadVoices();
+speechSynthesis.onvoiceschanged = loadVoices;
+
+// Воспроизведение корейского текста
+function speak(text) {
+  if ('speechSynthesis' in window) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'ko-KR';
+    const koVoice = voices.find(v => v.lang.toLowerCase().startsWith('ko'));
+    if (koVoice) utterance.voice = koVoice;
+    speechSynthesis.cancel();
+    speechSynthesis.speak(utterance);
+  }
+}
+
+// Показ всех фраз на странице
+Object.keys(PHRASES).forEach(cat => {
+  const h2 = document.createElement('h2');
+  h2.textContent = cat;
+  contentDiv.appendChild(h2);
+
+  PHRASES[cat].forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'phrase';
+    div.innerHTML = `<div>
+      <div class="korean">${p.k}</div>
+      <div class="russian">${p.r}</div>
+    </div>
+    <button class="btn" onclick="speak('${p.k.replace(/'/g,"\\'")}')">▶</button>`;
+    contentDiv.appendChild(div);
+  });
+
+  const option = document.createElement('option');
+  option.value = cat;
+  option.textContent = cat;
+  practiceSelect.appendChild(option);
+});
+
+practiceSelect.addEventListener('change', () => {
+  currentCategory = practiceSelect.value;
+  currentPhrases = PHRASES[currentCategory];
+  currentIndex = 0;
+  testFeedback.textContent = '';
+  progress.style.width = '0%';
+  userAnswer.disabled = false;
+  userAnswer.value = '';
+  showNextPhrase();
+});
+
+function showNextPhrase() {
+  if (currentIndex >= currentPhrases.length) {
+    korText.textContent = "Тест завершён!";
+    userAnswer.disabled = true;
+    return;
+  }
+  korText.textContent = currentPhrases[currentIndex].k;
+  userAnswer.value = '';
+  userAnswer.style.background = '#fff8f0';
+  userAnswer.style.color = '#333';
+}
+
+function nextPhrase() {
+  currentIndex++;
+  showNextPhrase();
+}
+
+korText.addEventListener('click', () =>speak(korText.textContent));
+
+function checkAnswer() {
+  if (currentIndex >= currentPhrases.length) return;
+  const phrase = currentPhrases[currentIndex];
+  const answer = userAnswer.value.trim();
+  const isCorrect = answer.toLowerCase() === phrase.r.toLowerCase();
+
+  if (isCorrect) {
+    userAnswer.style.background = '#d4f4dd';
+    userAnswer.style.color = '#155724';
+  } else {
+    userAnswer.style.background = '#f8d4d4';
+    userAnswer.style.color = '#721c24';
+  }
+
+  testFeedback.textContent += `${currentIndex+1}. Корейское: ${phrase.k}\nВаш ответ: ${answer || 'не ответили'}\nПравильный перевод: ${phrase.r}\n\n`;
+
+  progress.style.width = `${((currentIndex+1)/currentPhrases.length)*100}%`;
+}
+</script>
+
+</body>
+</html>
